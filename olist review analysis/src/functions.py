@@ -13,9 +13,15 @@ def get_engine(
     return create_engine(f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}")
 
 def sql(query , engine = None):
-    if engine in None:
+    if engine is None:
         engine = get_engine()
-    return pd.read_sql(query,engine)
+    else:
+        try:
+            df = pd.read_sql(text(query), engine)
+            return df
+        except Exception as e:
+            print("SQL ERROR:", e)
+            return None
 
 def select(table_name):
     return sql(f'select * from {table_name} limit 5')
