@@ -14,7 +14,7 @@ def get_engine(
     return create_engine(f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}")
 
 
-eng = get_engine(database="synthea_medical_dataset")
+eng = get_engine(database="oulad_university_dataset")
 
 def sql(query , engine = eng):
     if engine is None:
