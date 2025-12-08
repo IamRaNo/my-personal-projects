@@ -1,3 +1,4 @@
+
 from scipy.stats import levene,ttest_ind,chi2_contingency
 import numpy as np
 
@@ -39,8 +40,8 @@ def chi_sqared_test(ct):
     }
 
 
-def ttest(first,second):
-    stat,p=ttest_ind(np.array(first),np.array(second),equal_var=False)
+def ttest(first,second,equal_variance):
+    stat,p=ttest_ind(np.array(first),np.array(second),equal_var=equal_variance)
     result = "Reject null (groups different)" if p < 0.05 else "Fail to reject null (groups similar)"
     print(f"T-test p-value: {p:.5f} → {result}")
     return {"statistic": stat, "p": p, "result": result}
