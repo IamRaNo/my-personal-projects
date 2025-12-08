@@ -26,10 +26,11 @@ def plot_kde(column,data):
 
 def percentage_in_that_class(column,data,target,orient):
     df =data.groupby(column)[target].value_counts(normalize=True).mul(100).round(2).reset_index(name ='percentage_of_that_class')
-    ax = sns.barplot(y = column,x = 'percentage_of_that_class',data = df,hue= target,orient=orient,edgecolor = 'black',palette = 'tab20')
+    ax = sns.barplot(x = column,y = 'percentage_of_that_class',data = df,hue= target,orient=orient,edgecolor = 'black',palette = 'tab20')
     for container in ax.containers:
         ax.bar_label(container)
     plt.title(f'Percentage of {column} from each {target} class',weight = 'bold')
+
 
 def kde_in_both_class(column,data,target):
     sns.kdeplot(x = column,hue = target,data=data)
