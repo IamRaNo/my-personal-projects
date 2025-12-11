@@ -29,11 +29,27 @@ def plot_pie(column,data):
     plt.title(f"Distribution of {column}",weight = 'bold')
 
 #______________________________________________________________________________
+# For Box Plot os Single  Column
+def plot_box(column,data,line_val = .95):
+    mini = data[column].min()
+    maxi = data[column].max()
+    sns.boxplot(x = column,
+                data =data,
+                linewidth = 2)
+    plt.axvline(data[column].quantile(line_val),color = 'red')
+    plt.xticks(np.linspace(mini,maxi,20).astype('int'))
+    plt.title(f"Distribution of {column}",weight = 'bold')
+
+#______________________________________________________________________________
 # For KDE Plot os Single  Column
-def plot_kde(column,data):
+def plot_kde(column,data,line_val = .95):
+    mini = data[column].min()
+    maxi = data[column].max()
     sns.kdeplot(x = column,
                 data =data,
                 linewidth = 2)
+    plt.axvline(data[column].quantile(line_val),color = 'red')
+    plt.xticks(np.linspace(mini,maxi,20).astype('int'))
     plt.title(f"Distribution of {column}",weight = 'bold')
 
 #______________________________________________________________________________
