@@ -55,7 +55,8 @@ def find_nulls(table):
         '''
         df =sql(query)
         dict[col] = df.iloc[0].values.astype('int')
-    return(pd.DataFrame.
+    df = (pd.DataFrame.
             from_dict(dict,orient='index',columns=['null_values']).
             reset_index().
             rename(columns={'index':'column_names'}))
+    return df[df['null_values']>0]

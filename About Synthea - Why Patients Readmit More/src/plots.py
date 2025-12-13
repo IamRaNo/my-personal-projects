@@ -1,130 +1,208 @@
-# Importing the libraries
+# plots.py
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Defining all the necessary plots
+# ==========================================
+# 1. DESIGN SYSTEM SETUP
+# ==========================================
 
-#______________________________________________________________________________
-# For Pie Chart of Single Column
-def plot_pie(column,data):
-    df = (data[column].
-          value_counts(normalize= True).
-          mul(100).
-          round(2).
-          reset_index(name = 'percentage')
+def apply_custom_style():
+    """
+    Applies a modern, cleaner version of the FiveThirtyEight style.
+    """
+    plt.style.use('fivethirtyeight')
+    
+    # Custom Palette
+    custom_palette = ["#008fd5", "#fc4f30", "#e5ae38", "#6d904f", "#818181"]
+    sns.set_palette(custom_palette)
+    
+    # Overrides for a "Modern" look
+    plt.rcParams.update({
+        'figure.facecolor': 'white',
+        'axes.facecolor': 'white',
+        'axes.grid': True,
+        'grid.alpha': 0.4,
+        'grid.color': '#e6e6e6',
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+        'axes.spines.left': False,
+        'axes.spines.bottom': True,
+        'axes.titlelocation': 'left',
+        'axes.titleweight': 'bold',
+        'axes.titlesize': 18,
+        'axes.labelweight': 'bold',
+        'axes.labelsize': 12,
+        'xtick.labelsize': 10,
+        'ytick.labelsize': 10,
+        'legend.frameon': False,
+    })
+    print("Modern 538 Design System Applied!")
+
+def _add_title_subtitle(ax, title, subtitle):
+    """Internal helper to add consistent 538-style headers."""
+    # Main Headline
+    ax.text(x=0, y=1.12, s=title, fontsize=18, fontweight='bold', 
+            transform=ax.transAxes, ha='left')
+    # Subtitle
+    ax.text(x=0, y=1.05, s=subtitle, fontsize=12, color='#555555', 
+            transform=ax.transAxes, ha='left')
+
+# ==========================================
+# 2. PLOTTING FUNCTIONS
+# ==========================================
+
+# -----------------------------------------------------------------------------
+# Pie Chart
+# -----------------------------------------------------------------------------
+def plot_pie(column, data):
+    df = (data[column]
+          .value_counts(normalize=True)
+          .mul(100)
+          .round(2)
+          .reset_index(name='percentage')
           )
-    plt.pie(x = 'percentage',
-            data= df,
-            labels=df[column],
-            autopct="%.2f%%",
-            colors=plt.cm.tab20.colors,
-            shadow=True,
-            startangle= 200,
-            textprops={'size': 'smaller'},
-            wedgeprops={'edgecolor':'white'})
-    plt.title(f"Distribution of {column}",weight = 'bold')
-
-#______________________________________________________________________________
-# For Box Plot os Single  Column
-def plot_box(column,data,line_val = .95):
-    mini = data[column].min()
-    maxi = data[column].max()
-    sns.boxplot(x = column,
-                data =data,
-                linewidth = 2)
-    plt.axvline(data[column].quantile(line_val),color = 'red')
-    plt.xticks(np.linspace(mini,maxi,20).astype('int'))
-    plt.title(f"Distribution of {column}",weight = 'bold')
-
-#______________________________________________________________________________
-# For KDE Plot os Single  Column
-def plot_kde(column,data,line_val = .95):
-    mini = data[column].min()
-    maxi = data[column].max()
-    sns.kdeplot(x = column,
-                data =data,
-                linewidth = 2)
-    plt.axvline(data[column].quantile(line_val),color = 'red')
-    plt.xticks(np.linspace(mini,maxi,20).astype('int'))
-    plt.title(f"Distribution of {column}",weight = 'bold')
-
-#______________________________________________________________________________
-# For Bar Plot of Categorical Type Column and Target Column
-def percentage_in_that_class(column, data, target, orient):
-    df = (
-        data.groupby(column)[target]
-        .value_counts(normalize=True)
-        .mul(100)
-        .round(2)
-        .reset_index(name='percentage_of_that_class')
+    
+    # Grab the current axis
+    ax = plt.gca()
+    
+    colors = sns.color_palette()
+    
+    ax.pie(
+        x='percentage',
+        data=df,
+        labels=df[column],
+        autopct="%.1f%%",
+        colors=colors,
+        startangle=90,
+        wedgeprops={'edgecolor': 'white', 'linewidth': 2},
+        textprops={'fontsize': 11}
     )
-    # horizontal
+    
+    _add_title_subtitle(ax, 
+                        title=f"Breakdown of {column}", 
+                        subtitle=f"Distribution of categories in percentage")
+
+# -----------------------------------------------------------------------------
+# Box Plot (Univariate)
+# -----------------------------------------------------------------------------
+def plot_box(column, data, line_val=0.95):
+    ax = plt.gca()
+    
+    sns.boxplot(x=column, data=data, linewidth=1.5, ax=ax, width=0.5)
+    
+    # Add quantile line
+    quantile_val = data[column].quantile(line_val)
+    ax.axvline(quantile_val, color='#fc4f30', linestyle='--', alpha=0.8, linewidth=2)
+    ax.text(quantile_val, -0.4, f'{int(line_val*100)}th %tile', color='#fc4f30', fontweight='bold')
+
+    ax.set_xlabel(column.replace('_', ' ').title())
+    
+    _add_title_subtitle(ax, 
+                        title=f"Distribution of {column}", 
+                        subtitle=f"Boxplot showing median and outliers")
+
+# -----------------------------------------------------------------------------
+# KDE Plot (Univariate)
+# -----------------------------------------------------------------------------
+def plot_kde(column, data, line_val=0.95):
+    ax = plt.gca()
+    
+    sns.kdeplot(x=column, data=data, fill=True, linewidth=2, ax=ax, alpha=0.3)
+    
+    quantile_val = data[column].quantile(line_val)
+    ax.axvline(quantile_val, color='#fc4f30', linestyle='--', alpha=0.8)
+    
+    ax.set_ylabel("Density")
+    ax.set_yticks([]) 
+    ax.set_xlabel(column.replace('_', ' ').title())
+
+    _add_title_subtitle(ax, 
+                        title=f"Density Curve of {column}", 
+                        subtitle=f"Showing the shape of the data distribution")
+
+# -----------------------------------------------------------------------------
+# Bar Plot (Target Analysis)
+# -----------------------------------------------------------------------------
+def percentage_in_that_class(column, data, target, orient='v'):
+    df = (data.groupby(column)[target]
+          .value_counts(normalize=True)
+          .mul(100)
+          .round(2)
+          .reset_index(name='pct')
+          )
+    
+    ax = plt.gca()
+    
     if orient == 'h':
-        ax = sns.barplot(
-            y=column,
-            x='percentage_of_that_class',
-            data=df,
-            hue=target,
-            edgecolor='black',
-            palette='tab20'
-        )
-    # vertical
-    else:  # orient == 'v'
-        ax = sns.barplot(
-            x=column,
-            y='percentage_of_that_class',
-            data=df,
-            hue=target,
-            edgecolor='black',
-            palette='tab20'
-        )
+        sns.barplot(y=column, x='pct', data=df, hue=target, 
+                    edgecolor='white', ax=ax)
+        ax.set_xlabel("Percentage (%)")
+    else:
+        sns.barplot(x=column, y='pct', data=df, hue=target, 
+                    edgecolor='white', ax=ax)
+        ax.set_ylabel("Percentage (%)")
+
     for c in ax.containers:
-        ax.bar_label(c)
-    plt.title(f'Percentage of {column} from each {target} class', weight='bold')
+        ax.bar_label(c, fmt='%.1f%%', padding=3, fontsize=10)
 
-#______________________________________________________________________________
-# For KDE Plot in Different Target Classes
-def kde_in_all_class(column,data,target):
-    mini = data[column].min()
-    maxi = data[column].max()
-    sns.kdeplot(x = column,
-                hue = target,
-                data=data
-                )
-    plt.xticks(np.linspace(mini,maxi,20).astype('int'))
-    plt.title(f"Distribution of {column} by {target}")
+    ax.legend(title=target, bbox_to_anchor=(1, 1))
+    
+    _add_title_subtitle(ax, 
+                        title=f"How {target} varies by {column}", 
+                        subtitle=f"Percentage split within each category")
 
-#______________________________________________________________________________
-# For Box Plot in Different Target Classes
-def box_in_all_class(column,data,target):
-    mini = data[column].min()
-    maxi = data[column].max()
-    sns.boxplot(x = column,
-                hue = target,
-                data=data
-                )
-    plt.xticks(np.linspace(mini,maxi,20).astype('int'))
-    plt.title(f"Distribution of {column} by {target}")
+# -----------------------------------------------------------------------------
+# KDE Plot (Multivariate)
+# -----------------------------------------------------------------------------
+def kde_in_all_class(column, data, target):
+    ax = plt.gca()
+    
+    sns.kdeplot(x=column, hue=target, data=data, fill=True, linewidth=2, ax=ax, alpha=0.2)
+    
+    ax.set_yticks([]) 
+    ax.set_xlabel(column.replace('_', ' ').title())
+    
+    _add_title_subtitle(ax, 
+                        title=f"{column} vs. {target}", 
+                        subtitle="Compare distribution shapes to find separation")
 
-#______________________________________________________________________________
-# For Scatterplot in Different Target Classes
-def scatter_in_all_class(column,target,data):
-    plt.scatter(x = column,
-                    y=target,
-                    data=data,
-                    color = 'teal')
-    plt.title(f"Scatter plot of {column} in all {target}")
+# -----------------------------------------------------------------------------
+# Box Plot (Multivariate)
+# -----------------------------------------------------------------------------
+def box_in_all_class(column, data, target):
+    ax = plt.gca()
+    
+    sns.boxplot(x=column, y=target, data=data, orient='h', linewidth=1.5, ax=ax)
+    
+    ax.set_xlabel(column.replace('_', ' ').title())
+    
+    _add_title_subtitle(ax, 
+                        title=f"Comparison: {column} by {target}", 
+                        subtitle="Look for differences in medians and spread")
 
-#______________________________________________________________________________
-# For Heatmap for Large Categorical Classes
+# -----------------------------------------------------------------------------
+# Scatter Plot
+# -----------------------------------------------------------------------------
+def scatter_in_all_class(column, target, data):
+    ax = plt.gca()
+    
+    sns.scatterplot(x=column, y=target, data=data, ax=ax, s=60, alpha=0.6, edgecolor=None)
+    
+    _add_title_subtitle(ax, 
+                        title=f"Relationship: {column} vs {target}", 
+                        subtitle="Scatter plot to identify correlation")
+
+# -----------------------------------------------------------------------------
+# Heatmap
+# -----------------------------------------------------------------------------
 def plot_heatmap(ct, annot=True, cmap="Blues"):
-    sns.heatmap(ct, 
-                annot=annot, 
-                cmap=cmap, 
-                fmt=".1f", 
-                linewidths=.5)
-    plt.title("Crosstab Heatmap")
-    plt.xlabel(ct.columns.name if ct.columns.name else "Columns")
-    plt.ylabel(ct.index.name if ct.index.name else "Index")
+    ax = plt.gca()
+    
+    sns.heatmap(ct, annot=annot, cmap=cmap, fmt=".1f", 
+                linewidths=1, linecolor='white', cbar_kws={'shrink': .8}, ax=ax)
+    
+    _add_title_subtitle(ax, 
+                        title="Cross-Tabulation Heatmap", 
+                        subtitle="Intensity of values across categories")
